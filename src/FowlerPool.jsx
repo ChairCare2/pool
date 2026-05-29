@@ -862,95 +862,168 @@ function AreasPage({ setPage }) {
 }
 
 // ═══ GALLERY PAGE ════════════════════════════════════════════
+// All 15 local pool photos with labels
+const LOCAL_PHOTOS = [
+  { src:"/images/pool-backyard-clean.jpg",    title:"Backyard Pool — Crystal Clear",      category:"After" },
+  { src:"/images/pool-aerial-swim.jpg",        title:"Aerial View — Clean Water",          category:"After" },
+  { src:"/images/pool-tech-cleaning.jpg",      title:"Professional Pool Cleaning Service", category:"Service" },
+  { src:"/images/pool-before-after-1.jpg",     title:"Before & After — Green to Clean",    category:"Before/After" },
+  { src:"/images/pool-skimmer-net.jpg",        title:"Routine Maintenance — Skimming",     category:"Service" },
+  { src:"/images/pool-vacuum-underwater.jpg",  title:"Underwater Vacuum Service",          category:"Service" },
+  { src:"/images/pool-tiles-before-after.jpg", title:"Tile Cleaning — Before & After",     category:"Before/After" },
+  { src:"/images/pool-before-after-2.jpg",     title:"Full Pool Restoration",              category:"Before/After" },
+  { src:"/images/pool-pump-equipment.jpg",     title:"Pump & Equipment Service",           category:"Equipment" },
+  { src:"/images/pool-before-after-3.jpg",     title:"Water Line Tile — Before & After",   category:"Before/After" },
+  { src:"/images/pool-pressure-wash.jpg",      title:"Pool Deck Pressure Washing",         category:"Service" },
+  { src:"/images/pool-green-algae.jpg",        title:"Before: Algae Overgrowth",           category:"Before" },
+  { src:"/images/pool-tech-aerial.jpg",        title:"On-Site Technician — Aerial View",   category:"Service" },
+  { src:"/images/pool-blue-backyard.jpg",      title:"Beautiful Backyard Pool Result",     category:"After" },
+  { src:"/images/pool-kids-swimming.jpg",      title:"Happy Customers — Swim Ready!",      category:"After" },
+];
+
 function GalleryPage() {
   useScrollAnim();
-  const [gallery, setGallery] = useState(DEF_GALLERY);
+  const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
   const [lightbox, setLightbox] = useState(null);
   const [filter, setFilter] = useState("All");
-  const [sliderPos, setSliderPos] = useState(50);
-  const sliderRef = useRef(null);
-  const dragging = useRef(false);
+  const timerRef = useRef(null);
 
+  const cats = ["All", "After", "Before/After", "Before", "Service", "Equipment"];
+  const visible = filter === "All" ? LOCAL_PHOTOS : LOCAL_PHOTOS.filter(p => p.category === filter);
+
+  // Auto-advance slideshow
   useEffect(() => {
-    safeGet("gallery-items", DEF_GALLERY).then(setGallery);
-  }, []);
+    if (paused) return;
+    timerRef.current = setInterval(() => {
+      setCurrent(c => (c + 1) % LOCAL_PHOTOS.length);
+    }, 4000);
+    return () => clearInterval(timerRef.current);
+  }, [paused]);
 
-  const cats = ["All",...[...new Set(gallery.map(g=>g.category))]];
-  const visible = filter==="All" ? gallery : gallery.filter(g=>g.category===filter);
-
-  const updateSlider = useCallback(clientX => {
-    if (!sliderRef.current) return;
-    const r = sliderRef.current.getBoundingClientRect();
-    setSliderPos(Math.max(0, Math.min(100, ((clientX-r.left)/r.width)*100)));
-  }, []);
+  const goTo = i => { setCurrent(i); setPaused(true); setTimeout(() => setPaused(false), 8000); };
+  const prev = () => goTo((current - 1 + LOCAL_PHOTOS.length) % LOCAL_PHOTOS.length);
+  const next = () => goTo((current + 1) % LOCAL_PHOTOS.length);
 
   return (
     <>
+      {/* Page Header */}
       <div style={{ background:`linear-gradient(135deg,${C.navy},${C.ocean})`,padding:"80px 24px",position:"relative",overflow:"hidden" }}>
         <BubbleField count={8}/>
         <div style={{ maxWidth:700,margin:"0 auto",textAlign:"center",position:"relative",zIndex:1 }}>
           <AnimIn><h1 style={{ fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(36px,6vw,62px)",color:"#fff",margin:"0 0 18px",letterSpacing:1.5 }}>OUR WORK<br/><span style={{ color:C.cyan }}>GALLERY</span></h1></AnimIn>
-          <AnimIn delay={80}><p style={{ color:"rgba(255,255,255,.7)",fontSize:16,lineHeight:1.75 }}>Before-and-after photos and project highlights. Follow us on Facebook for the latest.</p></AnimIn>
+          <AnimIn delay={80}><p style={{ color:"rgba(255,255,255,.7)",fontSize:16,lineHeight:1.75 }}>Real photos from real jobs. Before-and-after results, equipment service, and cleanups across North Georgia.</p></AnimIn>
         </div>
       </div>
-      <WaveDiv topColor={C.ocean} botColor="#F0FBFF"/>
-      <div style={{ background:"#F0FBFF",padding:"72px 24px" }}>
-        <div style={{ maxWidth:1100,margin:"0 auto" }}>
+      <WaveDiv topColor={C.ocean} botColor={C.dark}/>
 
-          {/* Before/After Slider */}
-          <AnimIn>
-            <div style={{ marginBottom:60 }}>
-              <SHead label="Before & After" title="See the Difference" sub="Drag the slider to compare before and after our service."/>
-              <div
-                ref={sliderRef}
-                style={{ position:"relative",borderRadius:20,overflow:"hidden",boxShadow:"0 16px 50px rgba(0,50,100,.2)",cursor:"ew-resize",maxWidth:780,margin:"0 auto",userSelect:"none",touchAction:"none" }}
-                onMouseDown={e=>{dragging.current=true;updateSlider(e.clientX);}}
-                onMouseMove={e=>{if(dragging.current)updateSlider(e.clientX);}}
-                onMouseUp={()=>{dragging.current=false;}}
-                onMouseLeave={()=>{dragging.current=false;}}
-                onTouchStart={e=>updateSlider(e.touches[0].clientX)}
-                onTouchMove={e=>updateSlider(e.touches[0].clientX)}
-              >
-                <img src={IMGS.after} alt="After" style={{ width:"100%",display:"block",objectFit:"cover",maxHeight:420 }} onError={e=>{e.target.src="https://placehold.co/800x420/0077C8/ffffff?text=After";}}/>
-                <div style={{ position:"absolute",top:0,left:0,width:`${sliderPos}%`,height:"100%",overflow:"hidden" }}>
-                  <img src={IMGS.before} alt="Before" style={{ width:`${100/sliderPos*100}%`,maxWidth:"none",height:"100%",objectFit:"cover",display:"block" }} onError={e=>{e.target.src="https://placehold.co/800x420/3a6b40/ffffff?text=Before";}}/>
-                </div>
-                <div style={{ position:"absolute",top:18,left:18,background:"rgba(0,0,0,.6)",color:"#fff",fontWeight:700,fontSize:13,padding:"6px 14px",borderRadius:8 }}>BEFORE</div>
-                <div style={{ position:"absolute",top:18,right:18,background:"rgba(0,119,200,.7)",color:"#fff",fontWeight:700,fontSize:13,padding:"6px 14px",borderRadius:8 }}>AFTER</div>
-                <div style={{ position:"absolute",top:0,left:`${sliderPos}%`,transform:"translateX(-50%)",height:"100%",width:4,background:"#fff",boxShadow:"0 0 12px rgba(0,0,0,.5)",pointerEvents:"none" }}>
-                  <div style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:42,height:42,borderRadius:"50%",background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,.3)",display:"flex",alignItems:"center",justifyContent:"center",color:C.blue,fontSize:18,fontWeight:700,userSelect:"none" }}>⇔</div>
+      {/* ── HERO SLIDESHOW ── */}
+      <div style={{ background:C.dark,padding:"0 0 64px" }}>
+        <div style={{ position:"relative",maxWidth:1100,margin:"0 auto",padding:"0 0 0" }}>
+          {/* Main slide */}
+          <div style={{ position:"relative",overflow:"hidden",borderRadius:"0 0 24px 24px",boxShadow:"0 24px 64px rgba(0,0,0,.5)" }}>
+            {LOCAL_PHOTOS.map((photo, i) => (
+              <div key={i} style={{
+                position: i === 0 ? "relative" : "absolute",
+                inset: 0,
+                opacity: i === current ? 1 : 0,
+                transition: "opacity .7s ease",
+                pointerEvents: i === current ? "all" : "none",
+              }}>
+                <img
+                  src={photo.src}
+                  alt={photo.title}
+                  style={{ width:"100%",height:"520px",objectFit:"cover",display:"block",cursor:"zoom-in" }}
+                  onClick={() => setLightbox(photo)}
+                />
+                {/* Gradient overlay with title */}
+                <div style={{ position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.3) 60%,transparent 100%)",padding:"32px 32px 28px" }}>
+                  <div style={{ display:"inline-block",background:photo.category==="After"?C.green:photo.category==="Before"?"rgba(180,40,40,.8)":photo.category==="Before/After"?C.blue:C.pool,color:"#fff",fontSize:11,fontWeight:800,letterSpacing:2,padding:"4px 12px",borderRadius:6,marginBottom:10,textTransform:"uppercase" }}>{photo.category}</div>
+                  <div style={{ color:"#fff",fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(22px,3vw,34px)",letterSpacing:1 }}>{photo.title}</div>
+                  <div style={{ color:"rgba(255,255,255,.5)",fontSize:12,marginTop:4 }}>{current+1} of {LOCAL_PHOTOS.length}</div>
                 </div>
               </div>
-            </div>
-          </AnimIn>
+            ))}
 
-          {/* Filter */}
+            {/* Prev/Next arrows */}
+            <button onClick={prev} style={{ position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.5)",border:"none",color:"#fff",width:48,height:48,borderRadius:"50%",cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",transition:"background .2s",zIndex:10 }}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(0,119,200,.7)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,.5)"}>‹</button>
+            <button onClick={next} style={{ position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.5)",border:"none",color:"#fff",width:48,height:48,borderRadius:"50%",cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",transition:"background .2s",zIndex:10 }}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(0,119,200,.7)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,.5)"}>›</button>
+
+            {/* Pause/Play */}
+            <button onClick={() => setPaused(p=>!p)} style={{ position:"absolute",top:16,right:16,background:"rgba(0,0,0,.45)",border:"none",color:"#fff",width:36,height:36,borderRadius:"50%",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",zIndex:10 }}>
+              {paused ? "▶" : "⏸"}
+            </button>
+          </div>
+
+          {/* Dot indicators */}
+          <div style={{ display:"flex",gap:6,justifyContent:"center",marginTop:20,flexWrap:"wrap",padding:"0 24px" }}>
+            {LOCAL_PHOTOS.map((_,i) => (
+              <button key={i} onClick={() => goTo(i)} style={{ width:i===current?28:8,height:8,borderRadius:4,border:"none",background:i===current?C.cyan:"rgba(255,255,255,.2)",cursor:"pointer",transition:"all .25s",padding:0 }}/>
+            ))}
+          </div>
+
+          {/* Thumbnail strip */}
+          <div style={{ display:"flex",gap:8,overflowX:"auto",padding:"16px 24px 0",scrollbarWidth:"thin",scrollbarColor:`${C.blue} rgba(255,255,255,.1)` }}>
+            {LOCAL_PHOTOS.map((photo,i) => (
+              <div key={i} onClick={() => goTo(i)} style={{
+                flexShrink:0,width:90,height:62,borderRadius:10,overflow:"hidden",cursor:"pointer",
+                border:`2px solid ${i===current?C.cyan:"transparent"}`,
+                opacity:i===current?1:.55,transition:"all .2s",
+              }}>
+                <img src={photo.src} alt={photo.title} style={{ width:"100%",height:"100%",objectFit:"cover",display:"block" }}/>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <WaveDiv topColor={C.dark} botColor="#F0FBFF"/>
+
+      {/* ── FILTERED GRID ── */}
+      <div style={{ background:"#F0FBFF",padding:"72px 24px" }}>
+        <div style={{ maxWidth:1100,margin:"0 auto" }}>
+          <AnimIn><SHead label="Browse by Category" title="All Photos" sub="Click any photo to view full size."/></AnimIn>
+
+          {/* Category filter buttons */}
           <AnimIn>
-            <div style={{ display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",marginBottom:36 }}>
+            <div style={{ display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center",marginBottom:36 }}>
               {cats.map(c => (
-                <button key={c} onClick={() => setFilter(c)} style={{ padding:"9px 22px",borderRadius:30,fontWeight:700,fontSize:13,cursor:"pointer",background:filter===c?C.blue:"#fff",color:filter===c?"#fff":C.muted,border:`2px solid ${filter===c?C.blue:"rgba(0,0,0,.1)"}`,fontFamily:"inherit",transition:"all .2s" }}>{c}</button>
+                <button key={c} onClick={() => setFilter(c)} style={{ padding:"9px 20px",borderRadius:30,fontWeight:700,fontSize:13,cursor:"pointer",background:filter===c?C.blue:"#fff",color:filter===c?"#fff":C.muted,border:`2px solid ${filter===c?C.blue:"rgba(0,0,0,.1)"}`,fontFamily:"inherit",transition:"all .2s" }}>{c} {filter===c&&`(${visible.length})`}</button>
               ))}
             </div>
           </AnimIn>
 
-          {/* Masonry Grid */}
-          <div style={{ columns:"3 240px",gap:16 }}>
-            {visible.map((img,i) => (
-              <AnimIn key={img.id} delay={i*40}>
-                <div className="hover-lift" style={{ borderRadius:14,overflow:"hidden",marginBottom:16,cursor:"pointer",boxShadow:"0 4px 16px rgba(0,50,100,.1)",breakInside:"avoid" }} onClick={() => setLightbox(img)}>
-                  <div style={{ position:"relative",overflow:"hidden" }}>
-                    <img src={img.url} alt={img.title} style={{ width:"100%",display:"block",objectFit:"cover",transition:"transform .3s" }}
-                      onMouseEnter={e=>e.target.style.transform="scale(1.06)"}
-                      onMouseLeave={e=>e.target.style.transform="scale(1)"}
-                      onError={e=>{e.target.src=`https://placehold.co/600x400/003554/00CFFF?text=${encodeURIComponent(img.title)}`;}}/>
-                    {img.featured && <div style={{ position:"absolute",top:10,right:10,background:"#F59E0B",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:6 }}>FEATURED</div>}
-                    <div style={{ position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,.6) 0%,transparent 50%)",display:"flex",alignItems:"flex-end",padding:"14px",opacity:0,transition:"opacity .2s" }}
-                      onMouseEnter={e=>e.currentTarget.style.opacity=1}
-                      onMouseLeave={e=>e.currentTarget.style.opacity=0}>
-                      <div>
-                        <div style={{ color:"#fff",fontWeight:700,fontSize:14 }}>{img.title}</div>
-                        <div style={{ color:"rgba(255,255,255,.7)",fontSize:11,marginTop:2 }}>{img.category}</div>
-                      </div>
+          {/* Photo grid */}
+          <div style={{ columns:"3 220px",gap:14 }}>
+            {visible.map((photo,i) => (
+              <AnimIn key={photo.src} delay={i*35}>
+                <div
+                  className="hover-lift"
+                  style={{ borderRadius:14,overflow:"hidden",marginBottom:14,cursor:"zoom-in",boxShadow:"0 4px 16px rgba(0,50,100,.1)",breakInside:"avoid",position:"relative" }}
+                  onClick={() => setLightbox(photo)}
+                >
+                  <img
+                    src={photo.src}
+                    alt={photo.title}
+                    style={{ width:"100%",display:"block",objectFit:"cover",transition:"transform .35s" }}
+                    onMouseEnter={e=>e.target.style.transform="scale(1.06)"}
+                    onMouseLeave={e=>e.target.style.transform="scale(1)"}
+                  />
+                  <div style={{
+                    position:"absolute",inset:0,
+                    background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 55%)",
+                    opacity:0,transition:"opacity .25s",
+                    display:"flex",alignItems:"flex-end",padding:"14px",
+                  }}
+                    onMouseEnter={e=>e.currentTarget.style.opacity=1}
+                    onMouseLeave={e=>e.currentTarget.style.opacity=0}>
+                    <div>
+                      <div style={{ display:"inline-block",background:photo.category==="After"?C.green:photo.category==="Before"?"rgba(180,40,40,.8)":C.blue,color:"#fff",fontSize:9,fontWeight:800,letterSpacing:1.5,padding:"3px 8px",borderRadius:4,marginBottom:5,textTransform:"uppercase" }}>{photo.category}</div>
+                      <div style={{ color:"#fff",fontWeight:700,fontSize:13 }}>{photo.title}</div>
                     </div>
                   </div>
                 </div>
@@ -960,10 +1033,10 @@ function GalleryPage() {
 
           {/* Facebook CTA */}
           <AnimIn>
-            <div style={{ marginTop:40,background:`linear-gradient(135deg,${C.navy},${C.pool})`,borderRadius:18,padding:"32px",textAlign:"center" }}>
+            <div style={{ marginTop:48,background:`linear-gradient(135deg,${C.navy},${C.pool})`,borderRadius:18,padding:"36px",textAlign:"center" }}>
               <div style={{ fontSize:36,marginBottom:12 }}>📱</div>
               <h3 style={{ color:"#fff",fontWeight:800,fontSize:20,marginBottom:8 }}>See Our Latest Work on Facebook</h3>
-              <p style={{ color:"rgba(255,255,255,.75)",fontSize:14,marginBottom:20 }}>Follow Fowler Brothers Pool Service on Facebook for before-and-after photos, updates, and recent projects.</p>
+              <p style={{ color:"rgba(255,255,255,.75)",fontSize:14,marginBottom:20,lineHeight:1.7 }}>Follow Fowler Brothers Pool Service on Facebook for the most recent before-and-after photos, project updates, and more.</p>
               <RippleBtn href="https://www.facebook.com/profile.php?id=61566480455878" bg={C.green} style={{ padding:"12px 24px",borderRadius:10,fontSize:14 }}>📘 Follow on Facebook</RippleBtn>
             </div>
           </AnimIn>
@@ -972,11 +1045,14 @@ function GalleryPage() {
 
       {/* Lightbox */}
       {lightbox && (
-        <div style={{ position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,.92)",display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={() => setLightbox(null)}>
-          <div style={{ maxWidth:900,width:"100%",animation:"fadeIn .2s ease" }} onClick={e => e.stopPropagation()}>
-            <img src={lightbox.url} alt={lightbox.title} style={{ width:"100%",borderRadius:16,boxShadow:"0 20px 80px rgba(0,0,0,.6)" }} onError={e=>{e.target.src=`https://placehold.co/900x600/003554/00CFFF?text=${encodeURIComponent(lightbox.title)}`;}}/>
+        <div style={{ position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,.94)",display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={() => setLightbox(null)}>
+          <div style={{ maxWidth:960,width:"100%",animation:"fadeIn .2s ease" }} onClick={e=>e.stopPropagation()}>
+            <img src={lightbox.src} alt={lightbox.title} style={{ width:"100%",borderRadius:16,boxShadow:"0 20px 80px rgba(0,0,0,.6)",maxHeight:"80vh",objectFit:"contain" }}/>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:16 }}>
-              <div><div style={{ color:"#fff",fontWeight:700,fontSize:17 }}>{lightbox.title}</div><div style={{ color:"rgba(255,255,255,.5)",fontSize:13 }}>{lightbox.category}</div></div>
+              <div>
+                <div style={{ color:"#fff",fontWeight:700,fontSize:17 }}>{lightbox.title}</div>
+                <div style={{ color:"rgba(255,255,255,.5)",fontSize:13,marginTop:3 }}>{lightbox.category}</div>
+              </div>
               <button onClick={() => setLightbox(null)} style={{ background:"rgba(255,255,255,.1)",border:"none",color:"#fff",width:44,height:44,borderRadius:"50%",cursor:"pointer",fontSize:20,fontFamily:"inherit" }}>✕</button>
             </div>
           </div>
