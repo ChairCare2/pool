@@ -370,7 +370,7 @@ function HomePage({ setPage }) {
       {/* STATS */}
       <div ref={statsRef} style={{ background:C.ocean,padding:"64px 24px" }}>
         <div style={{ maxWidth:960,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:36,textAlign:"center" }}>
-          {[{n:yrs,s:"+",l:"Years Experience",ico:"📅"},{n:cust,s:"+",l:"Happy Customers",ico:"😊"},{n:7,s:"",l:"Service Types",ico:"🛠️"},{n:"100",s:"%",l:"Family Owned",ico:"🏡"}].map(s => (
+          {[{n:yrs,s:"+",l:"Years Experience",ico:"📅"},{n:cust,s:"+",l:"Happy Customers",ico:"😊"},{n:"7+",s:"",l:"Service Types",ico:"🛠️"},{n:"100",s:"%",l:"Family Owned",ico:"🏡"}].map(s => (
             <div key={s.l} style={{ opacity:sv?1:0,transition:"opacity .6s ease" }}>
               <div style={{ fontSize:28,marginBottom:6 }}>{s.ico}</div>
               <div style={{ fontFamily:"Bebas Neue,sans-serif",fontSize:56,color:C.cyan,lineHeight:1 }}>{s.n}{s.s}</div>
