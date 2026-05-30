@@ -295,7 +295,7 @@ function HomePage({ setPage }) {
   const [ti, setTi] = useState(0);
   const [faq, setFaq] = useState(null);
   const yrs = useCounter(8, sv);
-  const cust = useCounter(500, sv);
+  const cust = useCounter(100, sv);
 
   useEffect(() => {
     const obs = new IntersectionObserver(e => { if (e[0].isIntersecting) setSv(true); });
